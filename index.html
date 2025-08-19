@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Daily Routine Race</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom, #AED9E0, #B2EBF2);
+      text-align: center;
+      margin: 0;
+      padding: 15px;
+      color: #222;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      color: #1E3A8A;
+    }
+
+    h2 {
+      font-size: 1.4rem;
+      color: #1C64B8;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .time {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #D94600;
+      margin: 20px 0;
+    }
+
+    .action {
+      font-size: 1.4rem;
+      color: #1F2937;
+      margin: 15px 0;
+    }
+
+    .sentence {
+      font-size: 1.6rem;
+      color: #1E40AF;
+      margin: 20px 0;
+      min-height: 40px;
+    }
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    button.word-btn {
+      font-family: Arial, sans-serif;
+      font-size: 1.1rem;
+      padding: 10px 14px;
+      margin: 5px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background-color: #4F46E5;
+      color: white;
+      transition: background-color 0.2s;
+    }
+
+    button.word-btn:hover {
+      background-color: #4338CA;
+    }
+
+    button.reset-btn {
+      background-color: #EC4899;
+      font-size: 1rem;
+      padding: 8px 16px;
+    }
+
+    .feedback {
+      font-size: 1.3rem;
+      font-weight: bold;
+      min-height: 50px;
+      margin: 20px 0;
+    }
+
+    .score {
+      font-size: 1.2rem;
+      color: #2E7D32;
+      font-weight: bold;
+    }
+
+    .progress {
+      font-size: 1.1rem;
+      color: #555;
+    }
+
+    .track {
+      display: flex;
+      justify-content: space-around;
+      margin: 30px 0;
+      flex-wrap: wrap;
+    }
+
+    .city {
+      font-size: 0.9rem;
+      padding: 8px 10px;
+      background: #F3F4F6;
+      border: 2px solid #DDD;
+      border-radius: 10px;
+      width: 70px;
+      margin: 5px;
+    }
+
+    .city.current {
+      border-color: #10B981;
+      background: #DCFCE7;
+      font-weight: bold;
+    }
+
+    @media (max-width: 480px) {
+      .city { width: 60px; font-size: 0.85rem; }
+      .time { font-size: 1.6rem; }
+      button.word-btn { font-size: 1rem; padding: 8px 12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>🚗 Daily Routine Race</h1>
+    <h2>Build the sentence!</h2>
+
+    <div class="progress">Correct: <span id="score">0</span></div>
+
+    <div class="track">
+      <div class="city" id="city1">6:30 ⏰</div>
+      <div class="city" id="city2">7:00 🛏️</div>
+      <div class="city" id="city3">7:30 🍞</div>
+      <div class="city" id="city4">8:00 🎒</div>
+      <div class="city" id="city5">3:00 🍕</div>
+      <div class="city" id="city6">9:00 📚</div>
+    </div>
+
+    <div class="time" id="time">at 7 o'clock</div>
+    <div class="action" id="action">get up</div>
+
+    <div class="sentence" id="sentence"></div>
+
+    <div class="buttons" id="word-buttons"></div>
+
+    <button class="reset-btn" id="submit-btn">✅ Check</button>
+    <button class="reset-btn" id="next-btn" style="display:none;">Next 🚀</button>
+
+    <div class="feedback" id="feedback"></div>
+  </div>
+
+  <script>
+    // Все задания: время, действие, правильное предложение
+    const tasks = [
+      { time: "at 6:30", action: "wake up", sentence: "I wake up at 6:30" },
+      { time: "at 7 o'clock", action: "get up", sentence: "I get up at 7 o'clock" },
+      { time: "at 7:30", action: "have breakfast", sentence: "I have breakfast at 7:30" },
+      { time: "at 8 o'clock", action: "go to school", sentence: "I go to school at 8 o'clock" },
+      { time: "at 3 o'clock", action: "have lunch", sentence: "I have lunch at 3 o'clock" },
+      { time: "at 9 o'clock", action: "go to bed", sentence: "I go to bed at 9 o'clock" }
+    ];
+
+    let currentTask = 0;
+    let score = 0;
+    let selectedWords = [];
+    let allWords = [];
+
+    // Перемешиваем слова
+    function shuffleArray(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    // Создаём массив слов для перетасовки
+    function setupWords() {
+      const task = tasks[currentTask];
+      const baseSentence = task.sentence.toLowerCase().replace(/\.|,/g, '').split(' ');
+      allWords = shuffleArray(baseSentence);
+    }
+
+    // Отображаем город
+    function updateTrack() {
+      for (let i = 1; i <= 6; i++) {
+        const city = document.getElementById(`city${i}`);
+        city.classList.remove("current");
+        if (i - 1 === currentTask) {
+          city.classList.add("current");
+        }
+      }
+    }
+
+    // Загружаем задание
+    function loadTask() {
+      const task = tasks[currentTask];
+      document.getElementById("time").textContent = task.time;
+      document.getElementById("action").textContent = task.action;
+      document.getElementById("sentence").textContent = "";
+      document.getElementById("feedback").textContent = "";
+      document.getElementById("submit-btn").style.display = "inline";
+      document.getElementById("next-btn").style.display = "none";
+
+      selectedWords = [];
+      setupWords();
+
+      const buttonsContainer = document.getElementById("word-buttons");
+      buttonsContainer.innerHTML = "";
+
+      allWords.forEach(word => {
+        const btn = document.createElement("button");
+        btn.textContent = word;
+        btn.classList.add("word-btn");
+        btn.onclick = () => selectWord(word);
+        buttonsContainer.appendChild(btn);
+      });
+    }
+
+    // Выбор слова
+    function selectWord(word) {
+      selectedWords.push(word);
+      document.getElementById("sentence").textContent = selectedWords.join(" ");
+    }
+
+    // Проверка предложения
+    document.getElementById("submit-btn").addEventListener("click", () => {
+      const userAnswer = selectedWords.join(" ").trim().toLowerCase();
+      const correctAnswer = tasks[currentTask].sentence.toLowerCase();
+
+      const feedback = document.getElementById("feedback");
+
+      if (userAnswer === correctAnswer) {
+        feedback.textContent = "🎉 Correct! Well done!";
+        feedback.style.color = "#10B981";
+        score++;
+        document.getElementById("score").textContent = score;
+        document.getElementById("submit-btn").style.display = "none";
+        document.getElementById("next-btn").style.display = "inline";
+      } else {
+        feedback.textContent = `❌ Not quite. Try: "${correctAnswer}"`;
+        feedback.style.color = "#DC2626";
+      }
+    });
+
+    // Следующее задание
+    document.getElementById("next-btn").addEventListener("click", () => {
+      currentTask++;
+      if (currentTask >= tasks.length) {
+        alert(`🎉 Race complete! Your score: ${score} / ${tasks.length}`);
+        currentTask = 0;
+        score = 0;
+        document.getElementById("score").textContent = score;
+      }
+      loadTask();
+      updateTrack();
+    });
+
+    // Начало
+    window.onload = () => {
+      updateTrack();
+      loadTask();
+    };
+  </script>
+</body>
+</html>
