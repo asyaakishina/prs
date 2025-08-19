@@ -178,7 +178,7 @@
     let selectedWords = [];
     let allWords = [];
 
-    // Перемешиваем слова
+    // Перемешиваем массив
     function shuffleArray(array) {
       const arr = [...array];
       for (let i = arr.length - 1; i > 0; i--) {
@@ -188,10 +188,13 @@
       return arr;
     }
 
-    // Создаём массив слов для перетасовки
+    // Создаём массив слов с правильной заглавной "I"
     function setupWords() {
       const task = tasks[currentTask];
-      const baseSentence = task.sentence.toLowerCase().replace(/\.|,/g, '').split(' ');
+      // Разбиваем предложение на слова и заменяем "i" на "I"
+      const baseSentence = task.sentence.split(' ').map(word => {
+        return word.toLowerCase() === 'i' ? 'I' : word.toLowerCase();
+      });
       allWords = shuffleArray(baseSentence);
     }
 
@@ -224,7 +227,7 @@
 
       allWords.forEach(word => {
         const btn = document.createElement("button");
-        btn.textContent = word;
+        btn.textContent = word; // Уже с "I" вместо "i"
         btn.classList.add("word-btn");
         btn.onclick = () => selectWord(word);
         buttonsContainer.appendChild(btn);
@@ -239,8 +242,8 @@
 
     // Проверка предложения
     document.getElementById("submit-btn").addEventListener("click", () => {
-      const userAnswer = selectedWords.join(" ").trim().toLowerCase();
-      const correctAnswer = tasks[currentTask].sentence.toLowerCase();
+      const userAnswer = selectedWords.join(" ").trim();
+      const correctAnswer = tasks[currentTask].sentence; // Полное правильное предложение
 
       const feedback = document.getElementById("feedback");
 
